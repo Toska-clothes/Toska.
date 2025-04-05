@@ -1,59 +1,170 @@
-<header>
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <title>طراحی لباس | Toska</title>
+  <style>
+    body {
+      background-color: #f9f5f0;
+      font-family: sans-serif;
+      direction: rtl;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #5f3d2b;
+    }
+    canvas {
+      border: 2px dashed #ccc;
+      margin: 20px auto;
+      display: block;
+    }
+    input, button, label {
+      margin: 10px;
+      padding: 10px;
+      font-size: 1em;
+    }
+    .controls {
+      margin-top: 20px;
+    }
+    #designArea {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>توسکا</h1>
+  <p>خوش اومدین! حالا وقتشه لباس مورد علاقتون رو خودتون طراحی کنید!</p>
 
-<!--
-  <<< Author notes: Course header >>>
-  Include a 1280×640 image, course title in sentence case, and a concise description in emphasis.
-  In your repository settings: enable template repository, add your 1280×640 social image, auto delete head branches.
-  Add your open source license, GitHub uses MIT license.
--->
+  <button onclick="startDesign()">شروع طراحی</button>
 
-# GitHub Pages
+  <div id="designArea">
+    <canvas id="designCanvas" width="400" height="500"></canvas>
 
-_Create a site or blog from your GitHub repositories with GitHub Pages._
+    <div class="controls">
+      <button onclick="changeColor()">تغییر رنگ پارچه</button>
+      <br>
+      <label>افزودن متن:
+        <input type="text" id="textInput" placeholder="متن مورد نظر">
+        <button onclick="addText()">افزودن</button>
+      </label>
+      <br>
+      <label>افزودن تصویر:
+        <input type="file" id="imageInput" accept="image/*">
+      </label>
+      <br>
+      <label>تصویر آماده:
+        <button onclick="useSampleImage()">استفاده از تصویر گربه</button>
+      </label>
+    </div>
+  </div>
 
-</header>
+  <script>
+    const canvas = document.getElementById("designCanvas");
+    const ctx = canvas.getContext("2d");
+    let currentColor = "#d2b48c";
+    let addedText = null;
+    let addedImage = null;
+    let imageX = 150, imageY = 200, imageW = 100, imageH = 100;
+    let textX = 170, textY = 350;
+    let draggingImage = false, draggingText = false;
 
-<!--
-  <<< Author notes: Step 2 >>>
-  Start this step by acknowledging the previous step.
-  Define terms and link to docs.github.com.
-  Historic note: previous version checked for empty pull request, changed to the correct theme `minima`.
--->
+    function startDesign() {
+      document.querySelector("button").style.display = "none";
+      document.getElementById("designArea").style.display = "block";
+      drawHoodie();
+    }
 
-## Step 2: Configure your site
+    function drawHoodie() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = currentColor;
+      ctx.fillRect(120, 150, 160, 220);
+      ctx.fillRect(80, 150, 40, 120);
+      ctx.fillRect(280, 150, 40, 120);
 
-_You turned on GitHub Pages! :tada:_
+      if (addedText) {
+        ctx.font = "20px Tahoma";
+        ctx.fillStyle = "black";
+        ctx.fillText(addedText, textX, textY);
+        ctx.strokeRect(textX - 5, textY - 20, ctx.measureText(addedText).width + 10, 30);
+      }
 
-We'll work in a branch, `my-pages`, that I created for you to get this site looking great. :sparkle:
+      if (addedImage) {
+        ctx.drawImage(addedImage, imageX, imageY, imageW, imageH);
+        ctx.strokeStyle = "#999";
+        ctx.strokeRect(imageX, imageY, imageW, imageH);
+      }
+    }
 
-Jekyll uses a file titled `_config.yml` to store settings for your site, your theme, and reusable content like your site title and GitHub handle. You can check out the `_config.yml` file on the **Code** tab of your repository.
+    function changeColor() {
+      const colors = ["#d2b48c", "#6b4e3d", "#fff", "#8b5e3c"];
+      const index = colors.indexOf(currentColor);
+      currentColor = colors[(index + 1) % colors.length];
+      drawHoodie();
+    }
 
-We need to use a blog-ready theme. For this activity, we will use a theme named "minima".
+    function addText() {
+      addedText = document.getElementById("textInput").value;
+      drawHoodie();
+    }
 
-### :keyboard: Activity: Configure your site
+    function useSampleImage() {
+      const img = new Image();
+      img.src = "https://cdn-icons-png.flaticon.com/512/616/616408.png";
+      img.onload = () => {
+        addedImage = img;
+        drawHoodie();
+      };
+    }
 
-1. Browse to the `_config.yml` file in the `my-pages` branch.
-1. In the upper right corner, open the file editor.
-1. Add a `theme:` set to **minima** so it shows in the `_config.yml` file as below:
-   ```yml
-   theme: minima
-   ```
-1. (optional) You can modify the other configuration variables such as `title:`, `author:`, and `description:` to further customize your site.
-1. Commit your changes.
-1. (optional) Create a pull request to view all the changes you'll make throughout this course. Click the **Pull Requests** tab, click **New pull request**, set `base: main` and `compare:my-pages`.
-1. Wait about 20 seconds then refresh this page (the one you're following instructions from). [GitHub Actions](https://docs.github.com/en/actions) will automatically update to the next step.
+    document.getElementById("imageInput").addEventListener("change", function(e) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          addedImage = img;
+          drawHoodie();
+        };
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    });
 
-<footer>
+    canvas.addEventListener("mousedown", function(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      if (addedImage && x > imageX && x < imageX + imageW && y > imageY && y < imageY + imageH) {
+        draggingImage = true;
+      }
+      if (addedText) {
+        const textWidth = ctx.measureText(addedText).width;
+        if (x > textX && x < textX + textWidth && y > textY - 20 && y < textY + 10) {
+          draggingText = true;
+        }
+      }
+    });
 
-<!--
-  <<< Author notes: Footer >>>
-  Add a link to get support, GitHub status page, code of conduct, license link.
--->
+    canvas.addEventListener("mousemove", function(e) {
+      if (!draggingImage && !draggingText) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      if (draggingImage) {
+        imageX = x - imageW / 2;
+        imageY = y - imageH / 2;
+      }
+      if (draggingText) {
+        textX = x;
+        textY = y;
+      }
+      drawHoodie();
+    });
 
----
-
-Get help: [Post in our discussion board](https://github.com/orgs/skills/discussions/categories/github-pages) &bull; [Review the GitHub status page](https://www.githubstatus.com/)
-
-&copy; 2023 GitHub &bull; [Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md) &bull; [MIT License](https://gh.io/mit)
-
-</footer>
+    canvas.addEventListener("mouseup", function() {
+      draggingImage = false;
+      draggingText = false;
+    });
+  </script>
+</body>
+</html>
